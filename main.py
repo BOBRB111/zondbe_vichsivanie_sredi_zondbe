@@ -187,31 +187,49 @@ class Anti_Mag(Character):
             print("ребята я хочу домой( заклинание не изучено )")
             return 0
 
+
 class Heavy(Character):
-    def __init__(self,name):
-        super().__init__(name,200,5,30)
-        self.sandvich=4
+    def __init__(self, name):
+        super().__init__(name, 200, 5, 30, 200)
+        self.sandvich = 4
 
     def get_atk(self):
         return self.atk
 
-    def d_point(self,target):
-        k_dmg=0
+    def d_point(self, target):
+        k_dmg = 0
+
         for x in range(10):
-            chance=random.randint(1,75)
+            chance = random.randint(1, 75)
             if chance == 1:
-                dmg=self.get_atk()*20
+                dmg = self.get_atk() * 20
                 print("Крит")
+                k_dmg += dmg
             else:
-                dmg=self.get_atk()
+                dmg = self.get_atk()
             target.get_atk(dmg)
             print(f"{target.name} получил {dmg} урона")
-            k_dmg+=dmg
-        print(f"{target.name} всего получил {dmg} урона")
+            k_dmg += dmg
+        print(f"{target.name} всего получил {k_dmg} урона")
         return k_dmg
 
     def sandvich(self):
-        self.sandvich-=1
-        self.hp+=40
+        self.sandvich -= 1
+        self.hp += 40
         print("вы сьели сендвич!👍👍👍")
         return 0
+
+
+class Beli_monstr(Item):
+    def __init__(self, num=30):
+        super().__init__("hp_monstr", "восстанавливает здоровье")
+        self.num = num
+
+    def use_item(self,target):
+        if target.hp==target.max_hp:
+            print("полное здороье")
+            return False
+        else:
+            target.hp=min(target.max_hp,target.hp+self.num)
+            print(f"вы пьете белый монстр(+{self.num}hp)")
+            return True
