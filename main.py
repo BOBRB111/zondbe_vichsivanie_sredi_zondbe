@@ -98,6 +98,7 @@ class Anti_Mag(Character):
     def __init__(self, name):
         super().__init__(name, 90, 12, 10, 90)
         self.mana = 100
+        self.max_mana = 100
         self.spels = []
 
     def d_point(self, target):
@@ -225,11 +226,68 @@ class Beli_monstr(Item):
         super().__init__("hp_monstr", "восстанавливает здоровье")
         self.num = num
 
-    def use_item(self,target):
-        if target.hp==target.max_hp:
+    def use_item(self, target):
+        if target.hp == target.max_hp:
             print("полное здороье")
             return False
         else:
-            target.hp=min(target.max_hp,target.hp+self.num)
+            target.hp = min(target.max_hp, target.hp + self.num)
             print(f"вы пьете белый монстр(+{self.num}hp)")
             return True
+
+
+class Rozoviy_monstr(Item):
+    def __init__(self, num=50):
+        super().__init__("mana_monstr", "восстанавливает ману")
+        self.num = num
+
+    def use_item(self, target):
+        if target.hp == target.max_hp:
+            print("полная мана")
+            return False
+        else:
+            target.mana = min(target.max_mana, target.mana + self.num)
+            print(f"вы пьете розовый монстр(+{self.num} маны)")
+            return True
+
+class Enemy(Character):
+    def __init__(self,name,hp,atk,df,ex):
+        super().__init__(name,hp,atk,df)
+        self.ex=ex
+
+    def d_point(self,target):
+        dmg=self.get_atk()
+        return target.take_damage(int(dmg))
+
+class Ork(Enemy):
+#ммм грибочки
+    def __init__(self,name,hp=60,atk=5,df=5,ex=10):
+        super().__init__(name,hp,atk,df,ex)
+
+    def d_point(self, target):
+        dmg = self.get_atk()
+        print("вы пропустили удар")
+        return target.take_damage(int(dmg))
+
+class Kofevarka(Enemy):
+
+    def __init__(self,name,hp=50,atk=8,df=10,ex=20):
+        super().__init__(name,hp,atk,df,ex)
+
+    def d_point(self,target):
+        k_dmg=0
+        for x in range(2):
+            dmg=self.get_atk()
+            print("вы пропустили удар")
+            k_dmg+=dmg
+        print(f"вы потеряли всего{k_dmg}hp")
+        return target.take_damage(int(k_dmg))
+
+class STCR(Enemy):
+    def __init__(self,name,hp=40,atk=1,df=3,ex=30):
+        super().__init__(name,hp,atk,df,ex)
+
+    def d_point(self,target):
+        dmg=random.randint(0,30)+self.get_atk()
+        print("вы пропустили удар")
+        return target.take_damage(int(dmg))
