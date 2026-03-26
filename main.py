@@ -1,5 +1,4 @@
 import random
-import time
 from abc import ABC, abstractmethod
 
 
@@ -92,6 +91,10 @@ class Voin(Character):
             self.st = 0
         k_dmg = target.take_damage(dmg)
         return k_dmg
+
+    def d_point_2(self):
+        print("у тебя нет такой способности")
+        return False
 
 
 class Anti_Mag(Character):
@@ -214,11 +217,11 @@ class Heavy(Character):
         print(f"{target.name} всего получил {k_dmg} урона")
         return k_dmg
 
-    def sandvich(self):
+    def d_point_2(self):
         self.sandvich -= 1
         self.hp += 40
         print("вы сьели сендвич!👍👍👍")
-        return 0
+        return True
 
 
 class Beli_monstr(Item):
@@ -250,44 +253,113 @@ class Rozoviy_monstr(Item):
             print(f"вы пьете розовый монстр(+{self.num} маны)")
             return True
 
-class Enemy(Character):
-    def __init__(self,name,hp,atk,df,ex):
-        super().__init__(name,hp,atk,df)
-        self.ex=ex
 
-    def d_point(self,target):
-        dmg=self.get_atk()
+class Enemy(Character):
+    def __init__(self, name, hp, atk, df, ex, max_hp):
+        super().__init__(name, hp, atk, df, max_hp)
+        self.ex = ex
+
+    def d_point(self, target):
+        dmg = self.get_atk()
         return target.take_damage(int(dmg))
 
+
 class Ork(Enemy):
-#ммм грибочки
-    def __init__(self,name,hp=60,atk=5,df=5,ex=10):
-        super().__init__(name,hp,atk,df,ex)
+    # ммм грибочки
+    def __init__(self, name="Орк", hp=60, atk=5, df=5, ex=10, max_hp=60):
+        super().__init__(name, hp, atk, df, ex, max_hp)
 
     def d_point(self, target):
         dmg = self.get_atk()
         print("вы пропустили удар")
         return target.take_damage(int(dmg))
 
+
 class Kofevarka(Enemy):
 
-    def __init__(self,name,hp=50,atk=8,df=10,ex=20):
-        super().__init__(name,hp,atk,df,ex)
+    def __init__(self, name="Кофеварка", hp=50, atk=8, df=10, ex=20, max_hp=50):
+        super().__init__(name, hp, atk, df, ex, max_hp)
 
-    def d_point(self,target):
-        k_dmg=0
+    def d_point(self, target):
+        k_dmg = 0
         for x in range(2):
-            dmg=self.get_atk()
+            dmg = self.get_atk()
             print("вы пропустили удар")
-            k_dmg+=dmg
+            k_dmg += dmg
         print(f"вы потеряли всего{k_dmg}hp")
         return target.take_damage(int(k_dmg))
 
-class STCR(Enemy):
-    def __init__(self,name,hp=40,atk=1,df=3,ex=30):
-        super().__init__(name,hp,atk,df,ex)
 
-    def d_point(self,target):
-        dmg=random.randint(0,30)+self.get_atk()
+class STCR(Enemy):
+    def __init__(self, name="S.T.C.R.", hp=40, atk=1, df=3, ex=30, max_hp=40):
+        super().__init__(name, hp, atk, df, ex, max_hp)
+
+    def d_point(self, target):
+        dmg = random.randint(0, 30) + self.get_atk()
         print("вы пропустили удар")
         return target.take_damage(int(dmg))
+
+
+class Game:
+    def __init__(self):
+        self.player = None
+        self.enemy = None
+        self.flag = False
+        self.korabliki = 0
+        # кол-во битв за игру
+
+    def create_character(self):
+        print("создание персонажа,выберете класс")
+        print("1=воин 2=маг 3=Ассасин!")
+        while True:
+            clas = input("выберете класс")
+            if clas == 1:
+                name = input("введите имя")
+                self.player = Voin(name)
+                break
+            elif clas == 2:
+                name = input("введите имя")
+                self.player = Anti_Mag(name)
+                break
+            elif clas == 3:
+                name = input("введите имя")
+                self.player = Heavy(name)
+                break
+            else:
+                print("error")
+        print("ваш персонаж успешно создан")
+        print(self.player)
+        self.player.inv_add(Beli_monstr())
+        self.player.inv_add(Beli_monstr())
+        if isinstance(self.player, Anti_Mag):
+            self.player.inv_add(Rozoviy_monstr())
+
+    def create_enemy(self):
+        enemys = [Ork, Kofevarka, STCR]
+        chance = [50, 35, 15]
+        enemy = random.choice(enemys, weights=chance)
+        self.enemy = enemy()
+        print(f"на вас напал {self.enemy.name}")
+        print(self.enemy)
+
+    def player_turn(self):
+        while True:
+            print("ваш ход")
+            print("1-атаковать, 2-способность, 3-просмотреть инвентарь")
+            turn = int(input("выберете действие"))
+            if turn == 1:
+                self.player.d_point(self.enemy)
+                break
+            elif turn == 2:
+                self.player.d_point_2(self.enemy)
+                break
+            elif turn == 3:
+                for i, x in enumerate(self.player._inv):
+                    print(i, x)
+                print("какой предмет вы хотите использовать?")
+                choice = int(input("введите номер предмета"))
+                t = (self.player._inv[choice].use_item())
+                if t:
+                    self.player._inv.pop(choice)
+
+    def fight(self):
