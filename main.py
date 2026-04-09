@@ -24,13 +24,15 @@ class Character(ABC):
         return self.atk
 
     def get_alive(self):
-        return self.hp > 0
+        x = self.hp >= 0
+        # print(x)
+        return x
 
     def gain_xp(self, amount):
         self.xp += amount
         print(f"{self.name} получил {amount} опыта, всего xp {self.xp}")
         num = self.level * 1.5 * 20 // 1
-        if self.xp > num:
+        if self.xp >= num:
             self.xp -= num
             print(self.gain_level())
 
@@ -38,8 +40,8 @@ class Character(ABC):
         self.level += 1
         self.atk += 2
         self.df += 2
-        self.hp += self.max_hp
-        return F"ваш уровень повышен, теперь он составляет {self.level}, все характеристики повышены на 2"
+        self.hp = self.max_hp
+        return F"\n\nваш уровень повышен, теперь он составляет {self.level}, все характеристики повышены на 2\n\n"
 
     def take_damage(self, atk):
         k_atk = max(1, atk - self.get_df())
@@ -53,7 +55,7 @@ class Character(ABC):
         return f"вы подобрали {item}"
 
     def inv_watch(self):
-        if len(self._inv) == 0:
+        if len(self._inv) > 0:
             for x in self._inv:
                 print(x)
             return True
@@ -110,6 +112,7 @@ class Anti_Mag(Character):
             dmg = self.get_atk()
             target.hp -= dmg
             print(f"{target.name} получил {dmg} урона")
+            print(f"{self.mana} / {self.max_mana}")
             return dmg
         elif self.mana == 50:
             self.mana -= 30
@@ -191,10 +194,13 @@ class Anti_Mag(Character):
             print("ребята я хочу домой( заклинание не изучено )")
             return 0
 
+    def __str__(self):
+        return f"{self.name}-имя,{self.hp}/{self.max_hp},{self.atk}-урон,{self.df}-защита,{self.level}-уровень {self.mana}/{self.max_mana}"
+
 
 class Heavy(Character):
     def __init__(self, name):
-        super().__init__(name, 200, 5, 30, 200)
+        super().__init__(name, 200, 30, 30, 200)
         self.sandvich = 4
 
     def get_atk(self):
@@ -211,9 +217,9 @@ class Heavy(Character):
                 k_dmg += dmg
             else:
                 dmg = self.get_atk()
-            target.get_atk(dmg)
-            print(f"{target.name} получил {dmg} урона")
+            # print(f"{target.name} получил {dmg} урона")
             k_dmg += dmg
+        target.take_damage(k_dmg)
         print(f"{target.name} всего получил {k_dmg} урона")
         return k_dmg
 
@@ -230,7 +236,7 @@ class Beli_monstr(Item):
         self.num = num
 
     def use_item(self, target):
-        if target.hp == target.max_hp:
+        if target.hp >= target.max_hp:
             print("полное здороье")
             return False
         else:
@@ -245,7 +251,7 @@ class Rozoviy_monstr(Item):
         self.num = num
 
     def use_item(self, target):
-        if target.hp == target.max_hp:
+        if target.mana == target.max_mana:
             print("полная мана")
             return False
         else:
@@ -266,7 +272,7 @@ class Enemy(Character):
 
 class Ork(Enemy):
     # ммм грибочки
-    def __init__(self, name="Орк", hp=60, atk=5, df=5, ex=10, max_hp=60):
+    def __init__(self, name="Орк", hp=60, atk=5, df=5, ex=20, max_hp=60):
         super().__init__(name, hp, atk, df, ex, max_hp)
 
     def d_point(self, target):
@@ -312,17 +318,21 @@ class Game:
         print("создание персонажа,выберете класс")
         print("1=воин 2=маг 3=Ассасин!")
         while True:
-            clas = input("выберете класс")
-            if clas == 1:
-                name = input("введите имя")
+            try:
+                clas = input("выберете класс ")
+            except ValueError as e:
+                print(f"Error: {e}")
+                continue
+            if clas == "1":
+                name = input("введите имя ")
                 self.player = Voin(name)
                 break
-            elif clas == 2:
-                name = input("введите имя")
+            elif clas == "2":
+                name = input("введите имя ")
                 self.player = Anti_Mag(name)
                 break
-            elif clas == 3:
-                name = input("введите имя")
+            elif clas == "3":
+                name = input("введите имя ")
                 self.player = Heavy(name)
                 break
             else:
@@ -337,29 +347,96 @@ class Game:
     def create_enemy(self):
         enemys = [Ork, Kofevarka, STCR]
         chance = [50, 35, 15]
-        enemy = random.choice(enemys, weights=chance)
+        enemy = random.choices(enemys, weights=chance)[0]
+        # print(enemy)
         self.enemy = enemy()
         print(f"на вас напал {self.enemy.name}")
         print(self.enemy)
 
     def player_turn(self):
         while True:
-            print("ваш ход")
+            print("ваш ход\n")
             print("1-атаковать, 2-способность, 3-просмотреть инвентарь")
-            turn = int(input("выберете действие"))
+            try:
+                turn = int(input("выберете действие "))
+            except ValueError as e:
+                print(f"ошибка:{e}")
+                continue
             if turn == 1:
                 self.player.d_point(self.enemy)
                 break
             elif turn == 2:
-                self.player.d_point_2(self.enemy)
-                break
+                if isinstance(self.player, Heavy):
+                    self.player.d_point_2()
+                    break
+                else:
+                    self.player.d_point_2(self.enemy)
+                    break
             elif turn == 3:
                 for i, x in enumerate(self.player._inv):
                     print(i, x)
                 print("какой предмет вы хотите использовать?")
-                choice = int(input("введите номер предмета"))
-                t = (self.player._inv[choice].use_item())
+                try:
+                    choice = int(input("введите номер предмета"))
+
+                except ValueError:
+                    print("нада в циферках")
+                    continue
+
+                t = (self.player._inv[choice])
+
                 if t:
+                    t.use_item(self.player)
                     self.player._inv.pop(choice)
+                    break
+
+    def enemy_turn(self):
+        self.enemy.d_point(self.player)
+        return True
 
     def fight(self):
+        while self.player.get_alive() and self.enemy.get_alive():
+            # print(self.enemy.get_alive())
+            print("\nход игрока\n")
+            print(self.player)
+            self.player_turn()
+            if not self.enemy.get_alive():
+                break
+            print("ход противника\n")
+            print(self.enemy)
+            self.enemy_turn()
+        if self.player.get_alive:
+            self.player.gain_xp(self.enemy.ex * max(1, self.korabliki * 0.5 // 1))
+            self.player.inv_add(Beli_monstr())
+            if isinstance(self.player, Anti_Mag):
+                self.player.inv_add(Rozoviy_monstr())
+            print("вы победили!")
+            self.korabliki += 1
+            return True
+        else:
+            print("проблемы со скилом, игра окончена")
+            self.flag = True
+            return False
+
+    def start(self):
+        print("пр")
+        print("сегодня время для очередного подземелья")
+        self.create_character()
+        print("время для первого боя ")
+        print("удачи добраться до босса :3")
+        while not self.flag:
+            self.create_enemy()
+            self.fight()
+            if not self.flag:
+                print(self.player)
+                # self.player.inv_watch()
+                print(f"кол-во битв = {self.korabliki}")
+                print("\n\nидем дальше\n\n")
+        if self.flag:
+            print(f"бои-{self.korabliki}")
+            print(f"уровень-{self.player.level}")
+
+
+if __name__ == "__main__":
+    g = Game()
+    g.start()
