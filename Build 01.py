@@ -44,7 +44,7 @@ class VenomMixin:
     def venom(self, demege, cooldown):
         self.poisoned = True
         self.poison_damage = demege
-        self.poison_cooldown = cooldown
+        self.poison_cooldown += cooldown
         print(f"{self.name} был отравлен силами тьмы")
 
     def venom_demege(self):
@@ -99,12 +99,12 @@ class Spells(ABC):
 
 class Meteor(Spells):
     def __init__(self):
-        super().__init__("Метеор",20,"кидаться камнями👍👍👍")
+        super().__init__("Метеор", 20, "кидаться камнями👍👍👍")
 
     def use(self, target, user):
-        if user.mana>=self.cost:
-            user.mana-=self.cost
-            x=user.get_atk() * 5
+        if user.mana >= self.cost:
+            user.mana -= self.cost
+            x = user.get_atk() * 5
             target.take_damage(x)
             print(f"{target.name} получил по голове")
             return x
@@ -112,53 +112,107 @@ class Meteor(Spells):
             print("недостаточно маны")
             return False
 
+
 class Kolba(Spells):
     def __init__(self):
-        super().__init__("колба",14,"восстанавливает здоровье👍👍👍")
+        super().__init__("колба", 14, "восстанавливает здоровье👍👍👍")
 
-    def use(self,target, user):
-        if user.mana>=self.cost:
-            user.mana-=self.cost
-            user.hp=user.max_hp-10
+    def use(self, target, user):
+        if user.mana >= self.cost:
+            user.mana -= self.cost
+            user.hp = user.max_hp - 10
             print("вы пробудили второй аспект виверны и восстановили здоровье")
             return True
         else:
             print("у последнего дракона нет маны")
             return False
 
+
 class SunStrike(Spells):
     def __init__(self):
-        super().__init__("санстрайк",30,"САНЯ, санстрайк")
+        super().__init__("санстрайк", 30, "САНЯ, санстрайк")
 
-    def use(self,target,user):
+    def use(self, target, user):
         if user.mana >= self.cost:
             user.mana -= self.cost
-            target.get_damage(target.hp//5)
+            target.get_damage(target.hp // 5)
             print(f"{target.name} забыл намазать крем от загара")
         else:
             print("купите манго, недостаточно маны")
 
-class Priest(Character,VenomMixin):
-    def __init__(self,name):
-        Character.__init__(self,name,90,8,3,90)
+
+class Priest(Character, VenomMixin):
+    def __init__(self, name):
+        Character.__init__(self, name, 90, 8, 3, 90)
         VenomMixin.__init__(self)
         self.buff = False
 
     def get_atk(self):
-        return self.atk
+        if self.buff:
+            self.hp -= 5
+            return self.atk * 2
+        else:
+            return self.atk
 
-    def d_point(self,target):
+    def d_point(self, target):
         if not self.buff:
             target.take_damage(self.get_atk)
-            target.venom(self.get_atk,3)
+            target.venom(self.get_atk, 3)
             return True
         else:
-            target.take_damage(self.get_atk()*2)
-            target.venom(self.get_atk()*2,5)
+            target.take_damage(self.get_atk() * 2)
+            target.venom(self.get_atk() * 2, 5)
             return True
 
     def d_point_2(self):
         if not self.buff:
-            self.buff=True
+            self.buff = True
+            print("вы прочитали молитву,вы стали сильнее")
+        else:
+            self.buff = False
+            print("вы перестали читать молитвы и терять здоровье")
 
 
+class Viper(Enemy, VenomMixin):
+    def __init__(self):
+        Enemy.__init__(self, "viper", 100, 5, 0, 150, 100)
+        VenomMixin.__init__(self)
+
+    def get_atk(self):
+        return self.atk
+
+    def d_point(self, target):
+        if self.hp >= 30:
+            print("в вас плюнул вайпер, не терпите")
+            target.take_damage(self.get_atk())
+            target.venom(self.get_atk(), 3)
+        else:
+            self.d_point_2(target)
+
+    def d_point_2(self, target):
+        print("вайпер зол и атакует с большей силой")
+        target.take_damage(self.get_atk() * 2)
+        target.venom(self.get_atk(), 2)
+
+
+class Roshan(Enemy):
+
+    def __init__(self):
+        super().__init__("Рошан", 200, 20, 10, 1000, 200)
+        self.stacs = 0
+
+    def get_atk(self):
+        return self.atk
+
+    def atack(self, target):
+        target.take_damage(self.get_atk)
+        self.stacs += 1
+        print("вас ударл рошан")
+        return True
+
+    def stacs(self,target):
+        self.stacs=0
+        target.stan()
+        target.take_damage(self.get_atk)
+
+    def d_point(self, target):

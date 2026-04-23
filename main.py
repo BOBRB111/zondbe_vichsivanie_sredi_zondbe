@@ -12,6 +12,7 @@ class Character(ABC):
         self.xp = 0
         self._inv = []
         self.max_hp = max_hp
+        self.stan=False
 
     @abstractmethod
     def d_point(self, target):
@@ -61,6 +62,16 @@ class Character(ABC):
             return True
         else:
             return "инвентарь пуст"
+
+    def stan(self):
+        if not self.stan:
+            self.stan=True
+            print("вы находитесь в стане на 1 ход")
+            return True
+        else:
+            self.stan=False
+            print("вы больше не находитесь в стане")
+            return False
 
     def __str__(self):
         return f"{self.name}-имя,{self.hp}/{self.max_hp},{self.atk}-урон,{self.df}-защита,{self.level}-уровень"
@@ -354,6 +365,10 @@ class Game:
         print(self.enemy)
 
     def player_turn(self):
+        if self.player.stan:
+            self.player.stan()
+            print("вы пропускаете ход")
+            return False
         while True:
             print("ваш ход\n")
             print("1-атаковать, 2-способность, 3-просмотреть инвентарь")
@@ -391,6 +406,10 @@ class Game:
                     break
 
     def enemy_turn(self):
+        if self.enemy.stan:
+            self.enemy.stan()
+            print("противник пропускает ход")
+            return False
         self.enemy.d_point(self.player)
         return True
 
