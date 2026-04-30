@@ -200,19 +200,162 @@ class Roshan(Enemy):
     def __init__(self):
         super().__init__("Рошан", 200, 20, 10, 1000, 200)
         self.stacs = 0
+        self.patch = 3
 
     def get_atk(self):
         return self.atk
 
     def atack(self, target):
         target.take_damage(self.get_atk)
-        self.stacs += 1
-        print("вас ударл рошан")
+        print("вас ударил рошан")
         return True
 
-    def stacs(self,target):
-        self.stacs=0
+    def stacs(self, target):
         target.stan()
         target.take_damage(self.get_atk)
+        print("вас сильно ударил рошан")
+        return True
+
+    def patch(self):
+        self.hp += 40
+        print("рошан принял неизбежное и сьел Аегис (+40хп)")
+        return True
 
     def d_point(self, target):
+        if self.hp <= 50 and self.patch > 0:
+            self.patch -= 1
+            self.patch()
+
+        elif self.stacs == 4:
+            self.stacs = 0
+            self.stacs(target)
+
+        else:
+            self.stacs += 1
+            self.atack(target)
+
+
+class Mantiya_intelekta:
+    def __init__(self, name, stats, type):
+        self.name = name
+        self.stats = stats
+        self.flag = False
+        self.type = type
+
+    def flag(self, character):
+        if not self.flag:
+            self.flag = True
+            for keys, znacheniya in self.stats.items():
+                if hasattr(character, keys):
+                    setattr(character, keys), getattr((character, keys) + znacheniya)
+            print(f"{character.name} надевает {self.name}")
+            return True
+        return False
+
+    def unflag(self, character):
+        if self.flag:
+            self.flag = False
+            for keys, znacheniya in self.stats.items():
+                if hasattr(character, keys):
+                    setattr(character, keys), getattr((character, keys) - znacheniya)
+            print(f"{character.name} снимает {self.name}")
+            return True
+        return False
+
+    def __str__(self):
+        return f"{self.name}:название, {self.stats}:статы, {self.type}:тип"
+
+
+class Ems:
+    def __init__(self, character):
+        self.character = character
+        self.slots = {
+            "weapon": None, "helmet": None, "bronik": None, "ring": None
+        }
+        self.inventory = []
+
+    def add(self, item):
+        self.inventory.append(item)
+        print(f"{item} был добавлен в инвентарь")
+        return True
+
+    def equip(self, item_index):
+        if 0 <= item_index < len(self.inventory) - 1:
+            item = self.inventory[item_index]
+            slot = item.type
+            if self.slots[slot]:
+                self.slots[slot].unflag(self.character)
+            if self.flag(self.character):
+                self.slots[slot] = item
+                self.inventory.pop(item_index)
+                return True
+        return False
+
+    def show_inv(self):
+        print("предметы:")
+        for i, x in enumerate(self.inventory):
+            print(i, x)
+        return True
+
+    def show_slots(self):
+        print("экипировка")
+        for i, x in self.slots.items():
+            print(i, x)
+        return True
+
+
+class Equipment(Item):
+    def __init__(self, ecvp):
+        super().__init__(ecvp.name, f"предмет {ecvp}")
+        self.ecvp = ecvp
+
+    def use(self, character):
+        if hasattr(character, "equipment_system"):
+            character.equipment_system.add(self.ecvp)
+            return True
+        else:
+            print("персонаж не может одеть эту экипировку :(")
+            return False
+
+
+class Game_plus(Game):
+    def __init__(self):
+        super().__init__()
+        self.difficult = "norm"
+        self.roshanchik = 0
+
+    def create_character(self):
+        print("ку, сегодня время гулять по мультиверс фанфикам")
+        print("создай себе персонажа")
+        name = input("введите имя ")
+        print("на выбор: 1-воин 2-маг 3-(админ) 4-призыватель 5-священник")
+        while True:
+            ch = input("введите число ")
+            if ch == 1:
+                self.player = Voin(name)
+                break
+            elif ch == 2:
+                self.player = Anti_Mag(name)
+                break
+            elif ch == 3:
+                self.player = Heavy(name)
+                break
+            elif ch == 4:
+                self.player = Prizivatel(name)
+                break
+            elif ch == 5:
+                self.player = Priest(name)
+                break
+            else:
+                print("неправильно, попробуй еще раз")
+        print("ваш персонаж успешно создан")
+        print(self.player)
+        self.player.equipment_system=Ems(self.player)
+        self.player.inv_add(Beli_monstr())
+        self.player.inv_add(Beli_monstr())
+        if isinstance(self.player, Anti_Mag):
+            self.player.inv_add(Rozoviy_monstr())
+        x=Mantiya_intelekta("палка",{"atk":1},"weapon")
+        self.player.equipment_system.add(x)
+        print("вам выдали палку")
+
