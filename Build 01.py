@@ -323,6 +323,7 @@ class Game_plus(Game):
         super().__init__()
         self.difficult = "norm"
         self.roshanchik = 0
+        self.brace = True
 
     def create_character(self):
         print("ку, сегодня время гулять по мультиверс фанфикам")
@@ -350,12 +351,107 @@ class Game_plus(Game):
                 print("неправильно, попробуй еще раз")
         print("ваш персонаж успешно создан")
         print(self.player)
-        self.player.equipment_system=Ems(self.player)
+        self.player.equipment_system = Ems(self.player)
         self.player.inv_add(Beli_monstr())
         self.player.inv_add(Beli_monstr())
         if isinstance(self.player, Anti_Mag):
             self.player.inv_add(Rozoviy_monstr())
-        x=Mantiya_intelekta("палка",{"atk":1},"weapon")
+        x = Mantiya_intelekta("палка", {"atk": 1}, "weapon")
         self.player.equipment_system.add(x)
         print("вам выдали палку")
 
+    def create_enemy(self):
+        if 0 == self.korabliki % 15:
+            self.create_boss()
+            return True
+        if self.roshanchik > 0:
+            enemys = [Ork, Kofevarka, STCR, Viper]
+            chance = [25, 30, 25, 20]
+        else:
+            enemys = [Ork, Kofevarka, STCR]
+            chance = [50, 35, 15]
+        enemy = random.choices(enemys, weights=chance)[0]
+        # print(enemy)
+        self.enemy = enemy()
+        print(f"на вас напал {self.enemy.name}")
+        print(self.enemy)
+
+    def create_boss(self):
+        bosses = [Roshan]
+        chance = [100]
+        enemy = random.choices(bosses, weights=chance)[0]
+        self.enemy = enemy()
+        print(f"будьте осторожны,на вас напал {self.enemy.name}")
+        print(self.enemy)
+        return True
+
+    def player_turn(self):
+        if self.player.stan:
+            self.player.stan()
+            print("вы пропускаете ход")
+            return False
+        while True:
+            if self.brace:
+                print("у вас перерыв")
+                print("1-просмотр персонажа, 2-выбор экипировки, 3-просмотр инвентаря, 5-дальше")
+                x = input("введите число ")
+                if x == 1:
+                    print(self.player)
+                    self.player.equipment_system.show_slots()
+                elif x == 2:
+                    self.equipment_manage()
+                elif x == 3:
+                    for i, x in enumerate(self.player._inv):
+                        print(i, x)
+                    print("какой предмет вы хотите использовать?")
+                    try:
+                        choice = int(input("введите номер предмета"))
+                    except ValueError:
+                        print("нада в циферках")
+                        continue
+                elif x == 5:
+                    print("идем дальше")
+                    self.brace=False
+                    return True
+                else:
+                    print("нет")
+            print("ваш ход\n")
+            print("1-атаковать, 2-способность, 3-просмотреть инвентарь")
+            try:
+                turn = int(input("выберете действие "))
+            except ValueError as e:
+                print(f"ошибка:{e}")
+                continue
+            if turn == 1:
+                self.player.d_point(self.enemy)
+                break
+            elif turn == 2:
+                if isinstance(self.player, Heavy):
+                    self.player.d_point_2()
+                    break
+                else:
+                    self.player.d_point_2(self.enemy)
+                    break
+            elif turn == 3:
+                for i, x in enumerate(self.player._inv):
+                    print(i, x)
+                print("какой предмет вы хотите использовать?")
+                try:
+                    choice = int(input("введите номер предмета"))
+
+                except ValueError:
+                    print("нада в циферках")
+                    continue
+
+                t = (self.player._inv[choice])
+
+                if t:
+                    t.use_item(self.player)
+                    self.player._inv.pop(choice)
+                    break
+    def equipment_manage(self):
+        self.player.equipment_system.show_slots()
+        self.player.equipment_system.show_inv()
+        x=int(input("введите номер предмета "))
+        if x<=len(self.player.equipment_system.inventory)-1 and x>0:
+            self.player.equipment_system.equip(x)
