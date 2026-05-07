@@ -199,8 +199,8 @@ class Roshan(Enemy):
 
     def __init__(self):
         super().__init__("Рошан", 200, 20, 10, 1000, 200)
-        self.stacs = 0
-        self.patch = 3
+        self.stac = 0
+        self.patchs = 3
 
     def get_atk(self):
         return self.atk
@@ -222,16 +222,16 @@ class Roshan(Enemy):
         return True
 
     def d_point(self, target):
-        if self.hp <= 50 and self.patch > 0:
-            self.patch -= 1
+        if self.hp <= 50 and self.patchs > 0:
+            self.patchs -= 1
             self.patch()
 
         elif self.stacs == 4:
-            self.stacs = 0
+            self.stac = 0
             self.stacs(target)
 
         else:
-            self.stacs += 1
+            self.stac += 1
             self.atack(target)
 
 
