@@ -326,12 +326,10 @@ class Game_plus(Game):
         self.brace = True
 
     def create_character(self):
-        print("ку, сегодня время гулять по мультиверс фанфикам")
-        print("создай себе персонажа")
         name = input("введите имя ")
         print("на выбор: 1-воин 2-маг 3-(админ) 4-призыватель 5-священник")
         while True:
-            ch = input("введите число ")
+            ch = int(input("введите число "))
             if ch == 1:
                 self.player = Voin(name)
                 break
@@ -361,7 +359,7 @@ class Game_plus(Game):
         print("вам выдали палку")
 
     def create_enemy(self):
-        if 0 == self.korabliki % 15:
+        if 0 == self.korabliki % 15 and self.korabliki>1:
             self.create_boss()
             return True
         if self.roshanchik > 0:
@@ -411,7 +409,7 @@ class Game_plus(Game):
                         continue
                 elif x == 5:
                     print("идем дальше")
-                    self.brace=False
+                    self.brace = False
                     return True
                 else:
                     print("нет")
@@ -449,9 +447,83 @@ class Game_plus(Game):
                     t.use_item(self.player)
                     self.player._inv.pop(choice)
                     break
+
     def equipment_manage(self):
         self.player.equipment_system.show_slots()
         self.player.equipment_system.show_inv()
-        x=int(input("введите номер предмета "))
-        if x<=len(self.player.equipment_system.inventory)-1 and x>0:
+        x = int(input("введите номер предмета "))
+        if x <= len(self.player.equipment_system.inventory) - 1 and x > 0:
             self.player.equipment_system.equip(x)
+
+    def cast(self):
+        print(f"{self.player.mana}:{self.player.max_mana}")
+        print("выбери заклинание")
+        for i, x in enumerate(self.player.spels):
+            print(f"{i}:{x}")
+        while True:
+            choice = int(input("введите номер "))
+            if choice <= len(self.player.spels) - 1 and choice >= 0:
+                spell = self.player.spels[choice]
+                self.player.cast(self.enemy, spell)
+                break
+            else:
+                print("отказано")
+
+    def end_battle(self):
+        self.brace = True
+        if self.player.get_alive():
+            self.korabliki += 1
+            print(f"вы победишли {self.enemy.name}, ага")
+            self.player.gain_xp(self.enemy.xp)
+            if isinstance(self.enemy, Roshan):
+                self.roshanchik += 1
+                print("ура")
+                if self.roshanchik == 1:
+                    self.player.learn_spell(Meteor())
+                elif self.roshanchik == 1:
+                    self.player.learn_spell(Kolba())
+                elif self.roshanchik == 1:
+                    self.player.learn_spell(SunStrike())
+                loot = self.genlut()
+                self.player.inv_add(loot)
+        else:
+            print("смерь в деградации")
+            self.flag = True
+
+    def genlut(self):
+        poutions = [Beli_monstr(), Rozoviy_monstr()]
+        weapons = [Mantiya_intelekta("мурасама", {"atk": 15, "max_hp": 30}, "weapon"),
+                   Mantiya_intelekta("труба", {"atk": 30, "max_hp": 5}, "weapon"),
+                   Mantiya_intelekta("легендарная книга белых листов", {"atk": 2, "hp": 50, "max_mana": 30}, "weapon")
+                   ]
+        helmets = [Mantiya_intelekta("доминатор", {"max_hp": 50, "df": 15}, "helmet"),
+                   Mantiya_intelekta("ведро", {"atk": 40, "max_hp": -10, "df": 5}, "helmet"),
+                   Mantiya_intelekta("шапка ушанка", {"df": 15, "atk": 15}, "helmet")
+                   ]
+        broniks = [Mantiya_intelekta("благословление Агнес Тахион", {"max_mana": 60, "atk": 10}, "bronik"),
+                   Mantiya_intelekta("бронежилет из журналов", {"atk": 35, "max_hp": -15}, "bronik"),
+                   Mantiya_intelekta("блейд нейл", {"atk": 25, "max_hp": 25}, "bronik")
+                   ]
+        rings = [Mantiya_intelekta("сила тайги", {"max_hp": 50}, "ring"),
+                 Mantiya_intelekta("сила реки", {"max_mana": 70}, "ring"),
+                 Mantiya_intelekta("египетская сила", {"atk": 40}, "ring")
+                 ]
+        loot = [weapons, helmets, broniks, rings]
+        items = [random.choice(poutions), random.choice(loot)]
+        return items
+
+    def game_plus(self):
+        print("спасибо хорошо")
+        print("создайте персонажа")
+        self.create_character()
+        while not self.flag:
+            self.brace = False
+            self.create_enemy()
+            self.fight()
+            self.end_battle()
+            self.brace = True
+
+
+if __name__ == "__main__":
+    g = Game_plus()
+    g.game_plus()

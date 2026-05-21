@@ -105,7 +105,7 @@ class Voin(Character):
         k_dmg = target.take_damage(dmg)
         return k_dmg
 
-    def d_point_2(self):
+    def d_point_2(self,target):
         print("у тебя нет такой способности")
         return False
 
